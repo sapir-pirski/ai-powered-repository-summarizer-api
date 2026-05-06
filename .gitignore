@@ -1,15 +1,35 @@
+# Virtual environments
 .venv/
 venv/
+env/
+ENV/
+
+# Python cache and test artifacts
 __pycache__/
 *.py[cod]
+*$py.class
 *.pyo
 *.pyd
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
+coverage.xml
 htmlcov/
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+
+# Local environment and runtime files
 .env
-.env.local
+.env.*
+!.env.template
 logs/
+*.log
+
+# OS and editor files
 .DS_Store
+.idea/
+.vscode/

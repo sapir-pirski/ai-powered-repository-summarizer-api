@@ -1,84 +1,99 @@
 # Repository Summarizer API
 
 <p align="center">
-  <img src="assets/readme/hero.svg" alt="Repository Summarizer hero graphic" width="920" />
+  <img src="assets/readme/hero.svg" alt="Repository Summarizer API hero graphic" width="920" />
 </p>
 
 <p align="center">
   <a href="#"><img src="https://img.shields.io/badge/Python-3.10+-1f6feb?logo=python&logoColor=white" alt="Python 3.10+" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/FastAPI-service-0ea5e9?logo=fastapi&logoColor=white" alt="FastAPI" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/Endpoint-POST%20%2Fsummarize-111827" alt="POST /summarize" /></a>
-  <a href="#"><img src="https://img.shields.io/badge/LLM-OpenAI%20or%20Nebius-16a34a" alt="OpenAI or Nebius" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/FastAPI-service-009688?logo=fastapi&logoColor=white" alt="FastAPI service" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/Endpoint-POST%20%2Fsummarize-111827" alt="POST /summarize endpoint" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/LLM-Nebius%20or%20OpenAI-7c3aed" alt="Nebius or OpenAI LLM provider" /></a>
 </p>
 
-## Project in One Screen
+Repository Summarizer API turns a public GitHub repository URL into a concise project summary. It fetches repository metadata and selected source files, filters noisy content, fits the useful context into an LLM prompt, and returns structured JSON.
 
-| Panel | Details |
+| What you send | What you get |
 |---|---|
-| Purpose | Input a public GitHub URL, output a human-readable project summary. |
-| Output schema | `summary` (string), `technologies` (string[]), `structure` (string). |
-| Core promise | Works on real repos by filtering noisy files and fitting context budget. |
-| Runtime | FastAPI + OpenAI SDK (OpenAI or Nebius-compatible endpoint). |
+| Public GitHub repository URL | Human-readable summary |
+| `POST /summarize` JSON payload | Main technologies |
+| Optional GitHub token for higher rate limits | Brief project structure explanation |
 
-## Why this style
+<p align="center">
+  <img src="assets/readme/workflow.svg" alt="Workflow from GitHub URL to structured LLM summary" width="860" />
+</p>
 
-This README is intentionally structured like a compact "bento" dashboard with visual hierarchy, collapsible deep sections, and a diagram-first explanation flow.
+## Contents
 
-## Setup on a Clean Machine
+- [Quickstart](#quickstart)
+- [Configuration](#configuration)
+- [API Contract](#api-contract)
+- [How It Works](#how-it-works)
+- [Project Structure](#project-structure)
+- [Operational Notes](#operational-notes)
 
-1. Create and activate a virtual environment.
+## Quickstart
+
+Run the full project setup and server startup:
+
+```bash
+./run_project.sh
+```
+
+The script checks for Python 3.10+, creates `.venv`, installs dependencies from `requirements.txt`, creates `.env` from `env.template` if needed, and starts the API on port `8000`.
+
+Use another port when `8000` is already busy:
+
+```bash
+./run_project.sh --port 8001
+```
+
+The health check should return `{"status":"ok"}`:
+
+```bash
+curl http://localhost:8000/health
+```
+
+### Manual Setup
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-```
-
-2. Install dependencies.
-
-```bash
 pip install -r requirements.txt
-```
-
-3. Create `.env` from the template.
-
-```bash
-cp .env.example .env
-```
-
-4. Set at least one provider key in `.env`.
-
-```bash
-# if using OpenAI
-OPENAI_API_KEY=your_openai_api_key
-
-# optional alternative provider
-# NEBIUS_API_KEY=your_nebius_api_key
-
-# optional but recommended for higher GitHub API limits
-GITHUB_TOKEN=your_github_token
-```
-
-5. Optional tuning knobs in `.env`.
-
-```bash
-OPENAI_MODEL=gpt-4o-mini
-# OPENAI_BASE_URL=https://your-openai-compatible-endpoint/v1
-
-# LLM_TIMEOUT_SECONDS=60
-# LOG_DIR=logs
-# LLM_MAX_RETRIES=3
-# LLM_RETRY_BACKOFF_SECONDS=1.0
-# GITHUB_MAX_RETRIES=3
-# GITHUB_RETRY_BACKOFF_SECONDS=0.5
-```
-
-6. Start the API server.
-
-```bash
+cp env.template .env
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-## Test the Endpoint
+Before calling `/summarize`, set at least one LLM provider key in `.env`. For repeated local tests, set `GITHUB_TOKEN` as well to avoid GitHub's low unauthenticated API limit.
+
+## Configuration
+
+| Variable | Required | Purpose |
+|---|---:|---|
+| `NEBIUS_API_KEY` | One LLM key required | Nebius Token Factory API key. |
+| `OPENAI_API_KEY` | One LLM key required | OpenAI API key when using OpenAI as the alternative provider. |
+| `NEBIUS_MODEL` | No | Nebius model override. Defaults to `meta-llama/Llama-3.3-70B-Instruct`. |
+| `NEBIUS_BASE_URL` | No | Nebius OpenAI-compatible base URL. Defaults to `https://api.tokenfactory.nebius.com/v1/`. |
+| `OPENAI_MODEL` | No | OpenAI model override. Defaults to `gpt-4o-mini`. |
+| `OPENAI_BASE_URL` | No | Custom OpenAI-compatible endpoint. |
+| `GITHUB_TOKEN` | No | Raises GitHub API rate limits for repository fetching. |
+| `LOG_DIR` | No | Log directory. Defaults to `logs`. |
+| `LLM_TIMEOUT_SECONDS` | No | LLM request timeout. |
+| `LLM_MAX_RETRIES` | No | Number of LLM retry attempts. |
+| `GITHUB_MAX_RETRIES` | No | Number of GitHub retry attempts. |
+| `GITHUB_RETRY_BACKOFF_SECONDS` | No | Backoff delay between GitHub retry attempts. |
+
+Example `.env` values:
+
+```bash
+NEBIUS_API_KEY=your_nebius_api_key
+# OPENAI_API_KEY=your_openai_api_key
+GITHUB_TOKEN=your_github_token
+```
+
+## API Contract
+
+### `POST /summarize`
 
 ```bash
 curl -X POST http://localhost:8000/summarize \
@@ -86,17 +101,25 @@ curl -X POST http://localhost:8000/summarize \
   -d '{"github_url":"https://github.com/psf/requests"}'
 ```
 
-Success response shape:
+Request body:
 
 ```json
 {
-  "summary": "...",
-  "technologies": ["..."],
-  "structure": "..."
+  "github_url": "https://github.com/psf/requests"
 }
 ```
 
-Error response shape:
+Successful response:
+
+```json
+{
+  "summary": "Requests is a Python HTTP library...",
+  "technologies": ["Python", "urllib3", "certifi"],
+  "structure": "The project is organized around the main package, tests, documentation, and packaging metadata."
+}
+```
+
+Error response:
 
 ```json
 {
@@ -105,80 +128,70 @@ Error response shape:
 }
 ```
 
-## How the Service Thinks
+<p align="center">
+  <img src="assets/readme/response-preview.svg" alt="Request and response preview for the summarize endpoint" width="860" />
+</p>
+
+## How It Works
 
 ```mermaid
 flowchart LR
-    A[GitHub URL] --> B[Validate and parse repo reference]
-    B --> C[Fetch repo metadata and file tree]
-    C --> D[Filter low-signal files]
-    D --> E[Rank high-value files]
-    E --> F[Apply strict context budget and truncation]
-    F --> G[LLM prompt with metadata + tree + excerpts]
-    G --> H[Structured JSON summary]
+    A[GitHub URL] --> B[Parse owner and repo]
+    B --> C[Fetch metadata and tree]
+    C --> D[Filter generated and binary files]
+    D --> E[Rank important files]
+    E --> F[Apply context budget]
+    F --> G[Build LLM prompt]
+    G --> H[Return summary JSON]
 ```
+
+The repository processor prioritizes files that usually explain intent and architecture, including `README*`, dependency files, config files, docs, and top-level source directories. It skips noisy or heavy paths such as `node_modules/`, `dist/`, `build/`, virtual environments, lock files, and binary assets.
+
+Context is bounded with hard limits on the number of files, total characters, and per-file characters. Long files are truncated before sending the prompt, which keeps the service predictable on large repositories.
 
 ## Model Choice
 
-Default model is `gpt-4o-mini` when using OpenAI. It is a practical quality/cost tradeoff for repository summarization and keeps latency predictable. Nebius is supported via `NEBIUS_API_KEY` (or an OpenAI-compatible base URL).
+Nebius Token Factory is supported through the OpenAI-compatible client. The default Nebius model is `meta-llama/Llama-3.3-70B-Instruct`. OpenAI is also supported as an alternative provider, where the default model is `gpt-4o-mini`.
 
-## Repository Processing Strategy
-
-1. Parse URL and load metadata + full tree from GitHub REST API.
-2. Skip noisy or heavy paths/files (`node_modules/`, `dist/`, `build/`, binaries/images, lock files).
-3. Prioritize files that explain intent and architecture (`README*`, dependency/config files, key source directories, docs).
-4. Fetch only top-ranked candidates with hard limits (file count and total chars).
-5. Truncate long files and send compact context to the LLM.
-
-Result: meaningful summaries without overflowing model context.
-
-## Configuration
-
-| Variable | Purpose |
-|---|---|
-| `OPENAI_API_KEY` | Primary provider key (if set, OpenAI path is used first). |
-| `NEBIUS_API_KEY` | Alternative provider key for Nebius Token Factory usage. |
-| `OPENAI_MODEL` | Model name override (default `gpt-4o-mini`). |
-| `OPENAI_BASE_URL` | Optional custom OpenAI-compatible endpoint. |
-| `GITHUB_TOKEN` | Optional, improves GitHub rate limit. |
-| `LOG_DIR` | Optional log directory (default `logs`). |
-
-## Deep Dive
-
-<details>
-<summary><strong>Project structure</strong></summary>
+## Project Structure
 
 ```text
 .
 ├── app
 │   ├── main.py                     # FastAPI app, routes, middleware wiring
-│   ├── config.py                   # Configuration/constants
+│   ├── config.py                   # Configuration constants
 │   ├── schemas.py                  # Request/response schemas and RepoRef dataclass
-│   ├── logging_setup.py            # File logger setup
-│   ├── error_handlers.py           # Global API error handlers
+│   ├── logging_setup.py            # Rotating file logger
+│   ├── error_handlers.py           # JSON error responses
 │   └── services
-│       ├── repository_service.py   # GitHub fetching/filtering/context building
-│       └── llm_service.py          # LLM prompt, call, retry, response parsing
+│       ├── __init__.py
+│       ├── repository_service.py   # GitHub fetching, filtering, context building
+│       └── llm_service.py          # LLM prompt, retry, response parsing
 ├── assets
 │   └── readme
-│       └── hero.svg
+│       ├── hero.svg
+│       ├── workflow.svg
+│       └── response-preview.svg
 ├── requirements.txt
+├── run_project.sh
 ├── README.md
-├── .env.example
+├── TASK.md
+├── env.template
 └── .gitignore
 ```
 
-</details>
-
-<details>
-<summary><strong>Edge cases and operational notes</strong></summary>
+## Operational Notes
 
 - Only public GitHub repositories are supported.
-- GitHub unauthenticated rate limits apply when `GITHUB_TOKEN` is not set.
+- A missing LLM API key returns a clear server error before provider calls are attempted.
+- GitHub `403` responses are treated as rate-limit errors and returned as `429`; use `GITHUB_TOKEN` for repeated tests.
 - If no suitable text files are found, the API returns `422`.
-- `.env` is ignored via `.gitignore` to avoid committing secrets.
-- Logs are written to `logs/app.log` using a rotating file handler.
-- Errors are mapped to explicit HTTP responses: auth `401`, rate limit `429`, timeout `504`, provider failures `502`.
-- Transient GitHub/LLM failures are retried with bounded exponential backoff.
+- Runtime logs are written to `logs/app.log`, which is ignored by Git.
+- `.env` is ignored by Git; keep real provider keys out of committed files.
 
-</details>
+## Development Checks
+
+```bash
+python -m compileall app
+curl http://localhost:8000/health
+```

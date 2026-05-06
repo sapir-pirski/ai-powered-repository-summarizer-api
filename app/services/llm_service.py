@@ -50,8 +50,8 @@ def _build_llm_client() -> tuple[OpenAI, str, str]:
         return client, provider, model
 
     provider = "nebius"
-    model = os.getenv("NEBIUS_MODEL", "meta-llama/Meta-Llama-3.1-70B-Instruct")
-    base_url = os.getenv("NEBIUS_BASE_URL", "https://api.studio.nebius.ai/v1")
+    model = os.getenv("NEBIUS_MODEL", "meta-llama/Llama-3.3-70B-Instruct")
+    base_url = os.getenv("NEBIUS_BASE_URL", "https://api.tokenfactory.nebius.com/v1/")
     return OpenAI(api_key=nebius_api_key, base_url=base_url), provider, model
 
 
