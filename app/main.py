@@ -9,7 +9,11 @@ from app.services.llm_service import generate_summary
 from app.services.repository_service import fetch_repo_context, parse_github_url
 
 
-app = FastAPI(title="GitHub Project Summarizer", version="1.0.0")
+app = FastAPI(
+    title="Repository Summarizer API",
+    description="Summarizes public GitHub repositories with an LLM.",
+    version="1.0.0",
+)
 register_error_handlers(app)
 
 
