@@ -31,7 +31,7 @@
   </g>
 
   <text x="280" y="205" fill="#E5F3FF" font-family="Menlo, Monaco, Consolas, monospace" font-size="28" font-weight="700">
-    REPOSITORY SUMMARIZER API
+    AI-POWERED REPOSITORY SUMMARIZER API
   </text>
   <text x="280" y="250" fill="#CFE9FF" font-family="Menlo, Monaco, Consolas, monospace" font-size="17">
     Input: public GitHub URL

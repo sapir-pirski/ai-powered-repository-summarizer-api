@@ -1,7 +1,7 @@
-# Repository Summarizer API
+# AI-Powered Repository Summarizer API
 
 <p align="center">
-  <img src="assets/readme/hero.svg" alt="Repository Summarizer API hero graphic" width="920" />
+  <img src="assets/readme/hero.svg" alt="AI-Powered Repository Summarizer API hero graphic" width="920" />
 </p>
 
 <p align="center">
@@ -11,7 +11,7 @@
   <a href="#"><img src="https://img.shields.io/badge/LLM-Nebius%20or%20OpenAI-7c3aed" alt="Nebius or OpenAI LLM provider" /></a>
 </p>
 
-Repository Summarizer API turns a public GitHub repository URL into a concise project summary. It fetches repository metadata and selected source files, filters noisy content, fits the useful context into an LLM prompt, and returns structured JSON.
+AI-Powered Repository Summarizer API turns a public GitHub repository URL into a concise project summary. It fetches repository metadata and selected source files, filters noisy content, fits the useful context into an LLM prompt, and returns structured JSON.
 
 | What you send | What you get |
 |---|---|

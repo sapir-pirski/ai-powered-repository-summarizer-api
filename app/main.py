@@ -10,7 +10,7 @@ from app.services.repository_service import fetch_repo_context, parse_github_url
 
 
 app = FastAPI(
-    title="Repository Summarizer API",
+    title="AI-Powered Repository Summarizer API",
     description="Summarizes public GitHub repositories with an LLM.",
     version="1.0.0",
 )
