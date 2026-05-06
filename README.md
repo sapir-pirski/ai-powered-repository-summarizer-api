@@ -149,6 +149,8 @@ The repository processor prioritizes files that usually explain intent and archi
 
 Context is bounded with hard limits on the number of files, total characters, and per-file characters. Long files are truncated before sending the prompt, which keeps the service predictable on large repositories.
 
+The LLM call uses a system/user chat format compatible with `meta-llama/Llama-3.3-70B-Instruct`. Repository metadata and file excerpts are treated as untrusted reference material, so instructions found inside repository files are ignored. The prompt asks for one strict JSON object, and the request also sets `response_format={"type": "json_object"}` when calling the provider.
+
 ## Model Choice
 
 Nebius Token Factory is supported through the OpenAI-compatible client. The default Nebius model is `meta-llama/Llama-3.3-70B-Instruct`. OpenAI is also supported as an alternative provider, where the default model is `gpt-4o-mini`.
@@ -186,6 +188,7 @@ Nebius Token Factory is supported through the OpenAI-compatible client. The defa
 - A missing LLM API key returns a clear server error before provider calls are attempted.
 - GitHub `403` responses are treated as rate-limit errors and returned as `429`; use `GITHUB_TOKEN` for repeated tests.
 - If no suitable text files are found, the API returns `422`.
+- LLM output is validated as JSON before the API response is returned.
 - Runtime logs are written to `logs/app.log`, which is ignored by Git.
 - `.env` is ignored by Git; keep real provider keys out of committed files.
 
